@@ -43,14 +43,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h> 
-#include <time.h>
-#include <signal.h>
-#include <semaphore.h>
-#include <sys/mman.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <linux/limits.h>
-
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * Enums
@@ -78,8 +72,8 @@ typedef struct {
   uint8_t  dataBits:4;                                                         //!< The number of bits per serial word, example 8.
   uint8_t  stopBits:1;                                                         //!< The number of stop bits per serial word, example 1.
   uint8_t  baudrate;                                                           //!< The baud rate of the communication in bits per second, example 9600.
-  uint32_t timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
-  uint32_t minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
+  uint16_t timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
+  uint16_t minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
 } serial_config_t;
 
 typedef struct{
@@ -99,6 +93,8 @@ typedef struct{
 
 int8_t serial_open( const char *pathname, const serial_config_t * config, serial_t * serial );
 int8_t serial_close( serial_t * serial );
+int8_t serial_flush( serial_t * serial );
+bool serial_check( serial_t * serial );
 
 int8_t serial_default_config( serial_config_t * config );
 int8_t serial_config_update( const serial_config_t * config, serial_t * serial );           
@@ -107,10 +103,13 @@ int8_t serial_config_change_parity( const uint8_t parity, struct termios * tty )
 int8_t serial_config_change_stopbits( const uint8_t stopBits, struct termios * tty );
 int8_t serial_config_change_databits( const uint8_t dataBits, struct termios * tty );
 int8_t serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tty );
-int8_t serial_config_change_extra( const uint32_t timeout, const uint32_t min, struct termios * tty );
+int8_t serial_config_change_extra( const uint16_t timeout, const uint16_t min, struct termios * tty );
 
-int8_t serial_readLine( char * buf, const uint32_t size, const uint32_t offset, serial_t * serial );
-int32_t serial_read( char * buf, const uint32_t size, const uint32_t offset, const int32_t length, serial_t * serial );
+int32_t serial_readLine( char * buf, const int32_t size, const int32_t offset, serial_t * serial );
+int32_t serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t length, serial_t * serial );
+int32_t serial_printf( serial_t * serial, const char * format, ... );
+
+int32_t serial_available( serial_t * serial );
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * Definition file

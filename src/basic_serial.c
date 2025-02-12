@@ -98,6 +98,12 @@ serial_close( serial_t * serial ){
     return -1;
   }
 
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
   if( EOF == fclose( serial->pointer.fp ) ){
     fprintf(stderr, "ERROR:  failed to fclose, %s, at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
     return -1;
@@ -303,7 +309,7 @@ serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tt
  * 
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 int8_t
-serial_config_change_extra( const uint32_t timeout, const uint32_t min, struct termios * tty ){
+serial_config_change_extra( const uint16_t timeout, const uint16_t min, struct termios * tty ){
   if( !tty ){
     errno = EINVAL;
     return -1;
@@ -353,6 +359,12 @@ serial_config_update( const serial_config_t * config, serial_t * serial ){
   if( !config || !serial ){
     errno = EINVAL;
     fprintf(stderr, "ERROR: config and/or serial are 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
     return -1;
   }
 
@@ -433,28 +445,27 @@ serial_config_update( const serial_config_t * config, serial_t * serial ){
  * @param[in] serial The serial port structure associated with the read operation.  Specifically, the
  *                   file pointer (`serial->pointer.fp`) within this structure is used for reading.
  *
- * @return On success, the function returns 0.
- *         On error, it returns -1 and sets `errno` to indicate the error.
- *         On end-of-file (EOF), it returns 1. Other errors will be printed to `stderr`.
+ * @return On success, the function returns the number of bytes actually read (which may be less than
+ *         `length` if EOF or a timeout is encountered).
+ *         On error, the function returns -1 and sets `errno` to indicate the error.
+ *         On timeout, the function returns -2.
  *
- * @note The received data in `buf` is null-terminated (or as much as possible given the size), even if a newline
- *       character was not received.  If a newline is read, it will be included in the buffer.
- * @note This function uses `fgets()` internally and is designed for reading lines from a file stream associated
- *       with the serial port.
- * @note It is the caller's responsibility to ensure that `size` is large enough to accommodate the data
- *       being read, considering the `offset`.  If the combined length of the existing data in `buf` (up to `offset`)
- *       and the data read exceeds `size`, the function will return -1 with `ENOMEM`.
- * 
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-int8_t
-serial_readLine( char * buf, const uint32_t size, const uint32_t offset, serial_t * serial ){
+int32_t
+serial_readLine( char * buf, const int32_t size, const int32_t offset, serial_t * serial ){
   if( !buf || !serial ){
     errno = EINVAL;
     fprintf(stderr, "ERROR: serial and/or buf are 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
     return -1;
   }
-  
-  if( (size < strlen(buf)) || (size < offset) ){
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( size <= offset ){
     errno = ENOMEM;
     fprintf(stderr, "ERROR: serial_fgets, %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
     return -1;
@@ -462,10 +473,10 @@ serial_readLine( char * buf, const uint32_t size, const uint32_t offset, serial_
 
   clearerr( serial->pointer.fp );
 
-  if( NULL == fgets( buf+offset, size-offset, serial->pointer.fp ) ){
+  if( NULL == fgets( buf + offset, size - offset, serial->pointer.fp ) ){
     if( feof( serial->pointer.fp ) ){
       clearerr( serial->pointer.fp );
-      return 1;
+      return -2;
     }
     
     else if( ferror( serial->pointer.fp ) ) 
@@ -477,7 +488,7 @@ serial_readLine( char * buf, const uint32_t size, const uint32_t offset, serial_
     return -1;
   }
 
-  return 0;  
+  return strlen( buf + offset );  
 }
 
 /**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
@@ -500,30 +511,37 @@ serial_readLine( char * buf, const uint32_t size, const uint32_t offset, serial_
  * @return On success, the function returns the number of bytes actually read (which may be less than
  *         `length` if EOF or a timeout is encountered).
  *         On error, the function returns -1 and sets `errno` to indicate the error.
+ *         On timeout, the function returns -2.
  * 
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 int32_t
-serial_read( char * buf, const uint32_t size, const uint32_t offset, const int32_t length, serial_t * serial ){
+serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t length, serial_t * serial ){
   if( !buf || !serial ){
     errno = EINVAL;
     fprintf(stderr, "ERROR: serial and/or buf are 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
     return -1;
   }
-  
-  if( (size < (strlen(buf) + length)) || (size < (offset + length)) ){
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( size <= (offset + length) ){
     errno = ENOMEM;
-    fprintf(stderr, "ERROR: cserial_read, %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    fprintf(stderr, "ERROR: serial_read, %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
     return -1;
   }
 
   clearerr( serial->pointer.fp );
 
-  int32_t len = fread( buf+offset, 1, length, serial->pointer.fp );
+  int32_t len = fread( buf + offset, 1, length, serial->pointer.fp );
 
   if( length > len ){
     if( feof( serial->pointer.fp ) ){
       clearerr( serial->pointer.fp );
-      return 1;
+      return -2;
     }
     
     else if( ferror( serial->pointer.fp ) ) 
@@ -536,4 +554,188 @@ serial_read( char * buf, const uint32_t size, const uint32_t offset, const int32
   }
 
   return len;  
+}
+
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Formats a string and sends it to the serial port.
+ *
+ * This function formats a string using `vsnprintf()` and then writes the formatted string
+ * to the serial port associated with the provided `serial` structure using `fwrite()`.
+ *
+ * @param[in] serial The serial port structure.  The `fp` member of this structure (the file pointer)
+ *                 is used for writing.
+ * @param[in] format The format string, as used in `printf()`.
+ * @param[in] ... Variable arguments, as used in `printf()`.
+ *
+ * @return On success, the function returns the number of bytes written to the serial port.
+ *         On error, the function returns -1 and sets `errno` to indicate the error.
+ *
+ * @note This function uses `vsnprintf()` for formatting and `fwrite()` for writing to the serial port.
+ * @note The formatted string is written to a fixed-size buffer before being sent to the serial port.
+ *       If the formatted string is too long for the buffer, the function will return -1.
+ * 
+ **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int32_t 
+serial_printf( serial_t * serial, const char * format, ... ){
+  if( !serial || !format ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial and/or format are 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  va_list args;
+  va_start( args, format );
+
+  char buf[ PIPE_BUF ];
+  int len = vsnprintf( buf, sizeof(buf), format, args );
+
+  if( 0 > len ) {
+    fprintf(stderr, "ERROR: Formatting string failed at line %d in file %s\n", __LINE__, __FILE__);
+    va_end( args );
+    return -1;
+  }
+
+  if( sizeof( buf ) <= len ) {
+    fprintf(stderr, "ERROR: Formatted string too long for buffer at line %d in file %s\n", __LINE__, __FILE__);
+    va_end( args );
+    return -1;
+  }
+
+  int32_t size = fwrite( buf, 1, len, serial->pointer.fp );
+
+  if( size < len ){
+    if( ferror( serial->pointer.fp ) )
+      fprintf(stderr, "ERROR: write to serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    else
+      fprintf(stderr, "WARNING: Wrote less bytes than expected to the serial port at line %d in file %s\n", __LINE__, __FILE__);
+    
+    va_end( args );
+    return -1;
+  }
+
+  va_end( args ); 
+  return size;
+}
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Checks if a serial port is open and valid.
+ *
+ * This function checks if the file descriptor associated with the given serial port structure
+ * is valid and open. It uses `fcntl(F_GETFD)` to verify the file descriptor.
+ *
+ * @param[in] serial A pointer to the `serial_t` structure containing the serial port information.
+ *
+ * @return `true` if the serial port is likely open and valid (the file descriptor is valid),
+ *         `false` otherwise (the serial pointer is `NULL`, the file descriptor is invalid,
+ *         or `fcntl` fails).
+ *
+ * @note This function only checks the validity of the file descriptor.  It does not guarantee
+ *       that the serial port is actually ready for communication.  There might be other
+ *       issues (e.g., hardware problems) that prevent successful communication even if this
+ *       function returns `true`.
+ * @note If the `serial` pointer is `NULL`, `errno` will be set to `EINVAL`.
+ * 
+ **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+bool 
+serial_check( serial_t * serial ){
+  if( !serial ){
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return false;
+  }
+
+  if( 0 > serial->pointer.fd ){
+    fprintf(stderr, "WARNING: serial port (file descriptor) isn't valid\n");
+    return false;
+  }
+
+  if( -1 == fcntl( serial->pointer.fd, F_GETFD ) ){
+    fprintf(stderr, "WARNING: serial port (file descriptor) isn't opened\n");
+    return false;
+  }
+
+  return true;
+}
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Waits for all pending output to be transmitted on the serial port.
+ *
+ * This function uses `tcdrain()` to wait until all pending data in the output buffer of the
+ * serial port associated with the given `serial` structure has been transmitted.  This is
+ * typically used to ensure that all data has been sent before closing the port or performing
+ * other operations.
+ *
+ * @param[in] serial A pointer to the `serial_t` structure containing the serial port information.
+ *
+ * @return 0 on success, -1 on error.  If an error occurs, `errno` will be set to indicate
+ *         the error.
+ * 
+**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int8_t 
+serial_flush( serial_t * serial ){
+  if( !serial ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+  
+  if( -1 == tcdrain( serial->pointer.fd ) ){
+    fprintf(stderr, "ERROR: tcdrain the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    return -1;
+  }
+
+  return 0;
+}
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Returns the number of bytes available in the serial port's input buffer.
+ *
+ * This function uses `ioctl(FIONREAD)` to get the number of bytes that can be read from the
+ * serial port without blocking.
+ *
+ * @param[in] serial A pointer to the `serial_t` structure containing the serial port information.
+ *
+ * @return On success, the function returns the number of bytes on the serial port buffer.
+ *         On error, the function returns -1 and sets `errno` to indicate the error.
+ * 
+**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int32_t 
+serial_available( serial_t * serial ){
+  if( !serial ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+  
+  int32_t len;
+  if( -1 == ioctl( serial->pointer.fd, FIONREAD, &len ) ) {
+    fprintf(stderr, "ERROR: ioctl(FIONREAD) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    return -1;
+  }  
+
+  if( 0 > len ){
+    fprintf(stderr, "ERROR: ioctl(FIONREAD) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    return -1;
+  }
+
+  return len;
 }

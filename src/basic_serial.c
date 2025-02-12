@@ -679,7 +679,7 @@ serial_check( serial_t * serial ){
  * 
 **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 int8_t 
-serial_flush( serial_t * serial ){
+serial_drain( serial_t * serial ){
   if( !serial ) {
     errno = EINVAL;
     fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
@@ -699,6 +699,44 @@ serial_flush( serial_t * serial ){
 
   return 0;
 }
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Flush input and output buffers and make the change.
+ * 
+ * This function uses `tcflush()` to discard data in the specified buffer of the
+ * serial port associated with the given `serial` structure.  It can be used to
+ * clear the input buffer (discarding unread data) `TCIFLUSH`, the output buffer (discarding
+ * pending data) `TCOFLUSH`, or both `TCIOFLUSH`.
+ * 
+ * @param[in] serial A pointer to the `serial_t` structure containing the serial port information.
+ * @param[in] option A option to which buffer should be discard `TCIFLUSH`, `TCOFLUSH` or `TCIOFLUSH`.
+ * 
+ * @return 0 on success, -1 on error.  If an error occurs, `errno` will be set to indicate
+ *         the error.
+ * 
+**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int8_t 
+serial_flush( serial_t * serial, uint8_t option ){
+  if( !serial ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+  
+  if( -1 == tcflush( serial->pointer.fd, option ) ){
+    fprintf(stderr, "ERROR: tcdflush the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    return -1;
+  }
+
+  return 0;
+}
+
 
 /**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
  * @brief Returns the number of bytes available in the serial port's input buffer.

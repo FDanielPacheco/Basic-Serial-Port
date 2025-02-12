@@ -93,7 +93,8 @@ typedef struct{
 
 int8_t serial_open( const char *pathname, const serial_config_t * config, serial_t * serial );
 int8_t serial_close( serial_t * serial );
-int8_t serial_flush( serial_t * serial );
+int8_t serial_flush( serial_t * serial, uint8_t option );
+int8_t serial_drain( serial_t * serial );
 bool serial_check( serial_t * serial );
 
 int8_t serial_default_config( serial_config_t * config );

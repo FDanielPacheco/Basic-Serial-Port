@@ -1,4 +1,4 @@
- /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
+/***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * Introduction
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 
@@ -602,7 +602,7 @@ serial_printf( serial_t * serial, const char * format, ... ){
     return -1;
   }
 
-  if( sizeof( buf ) <= len ) {
+  if( (int) sizeof( buf ) <= len ) {
     fprintf(stderr, "ERROR: Formatted string too long for buffer at line %d in file %s\n", __LINE__, __FILE__);
     va_end( args );
     return -1;
@@ -776,4 +776,106 @@ serial_available( serial_t * serial ){
   }
 
   return len;
+}
+
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ *
+ * @brief Sets the state (asserted or deasserted) of a serial port control line.
+ *
+ * This function sets the specified control line (DTR, RTS, CTS, etc.) of the serial port
+ * to the desired state.
+ *
+ * @param[in] line The control line to set (e.g., SERIAL_DTR, SERIAL_RTS).
+ * @param[in] state `true` to assert the line, `false` to deassert it.
+ * @param[in] serial A pointer to the `serial_t` structure.
+ *
+ * @return 0 on success, -1 on error.  If an error occurs, `errno` will be set to indicate
+ *         the error.
+ * 
+**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int8_t 
+serial_set_line_state( enum serial_control_lines line, bool state, serial_t * serial ){
+  if( !serial ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  bool currentState;
+  if( -1 != serial_read_line_state( line, &currentState, serial ) ){
+    fprintf(stderr, "ERROR: serial_read_line_state at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( currentState != state ){
+    int status;
+    if( -1 == ioctl( serial->pointer.fd, TIOCMGET, &status ) ){
+      fprintf(stderr, "ERROR: ioctl(TIOCMGET) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+      return -1;
+    }
+    
+    if( state ) status |= line;
+    else        status &= ~line;
+
+    if( -1 == ioctl( serial->pointer.fd, TIOCMSET, &status ) ){
+      fprintf(stderr, "ERROR: ioctl(TIOCMSET) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+      return -1;
+    }
+
+    if( -1 != serial_read_line_state( line, &currentState, serial ) ){
+      fprintf(stderr, "ERROR: serial_read_line_state at line %d in file %s\n", __LINE__, __FILE__);
+      return -1;
+    }
+
+    if( currentState != state ){
+      fprintf(stderr, "ERROR: serial_read_line_state at line %d in file %s\n", __LINE__, __FILE__);
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
+ * @brief Gets the state (asserted or deasserted) of a serial port control line.
+ *
+ * This function reads the modem status bits of the serial port and determines whether
+ * the specified control line (DTR, RTS, CTS, etc.) is currently asserted or deasserted.
+ *
+ * @param[in] line The control line to check `SERIAL_DTR`, `SERIAL_RTS`, `SERIAL_CTS`, `SERIAL_CAR` or `SERIAL_LE`.
+ * @param[out] state A pointer to a boolean variable where the state of the line will be stored.
+ *                 `true` if the line is asserted, `false` if deasserted.
+ * @param[in] serial A pointer to the `serial_t` structure.
+ *
+ * @return 0 on success, -1 on error.  If an error occurs, `errno` will be set to indicate
+ *         the error.
+**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+int8_t 
+serial_read_line_state( enum serial_control_lines line, bool *state ,serial_t * serial ){
+  if( !serial ) {
+    errno = EINVAL;
+    fprintf(stderr, "ERROR: serial is 'NULL' at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  if( !serial_check( serial ) ){
+    errno = EBADF;
+    fprintf(stderr, "ERROR: serial port ins't opened at line %d in file %s\n", __LINE__, __FILE__);
+    return -1;
+  }
+
+  int status;
+  if( -1 == ioctl( serial->pointer.fd, TIOCMGET, &status ) ){
+    fprintf(stderr, "ERROR: ioctl(TIOCMGET) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
+    return -1;
+  }
+  
+  *state = (status & line) != 0;
+  return 0;
 }

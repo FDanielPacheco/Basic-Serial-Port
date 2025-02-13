@@ -57,12 +57,14 @@ enum enum_serial_t{
   PARTIY_NONE = 0,
   PARITY_ODD  = 1,
   PARTIY_EVEN = 2,
-  SERIAL_DSR = 0,
-  SERIAL_DTR = 1,
-  SERIAL_RTS = 2,
-  SERIAL_CTS = 3,
-  SERIAL_DCD = 4,
-  SERIAL_DSR = 5,
+};
+
+enum serial_control_lines{
+  SERIAL_DSR = TIOCM_LE,
+  SERIAL_DTR = TIOCM_DTR,
+  SERIAL_RTS = TIOCM_RTS,
+  SERIAL_CTS = TIOCM_CTS,
+  SERIAL_DCD = TIOCM_CAR,
 };
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
@@ -116,8 +118,10 @@ int32_t serial_printf( serial_t * serial, const char * format, ... );
 
 int32_t serial_available( serial_t * serial );
 
-int8_t serial_set_line_state( uint8_t line, bool state );
-int8_t serial_read_line_state( uint8_t line );
+int8_t serial_set_line_state( enum serial_control_lines line, bool state, serial_t * serial );
+int8_t serial_read_line_state( enum serial_control_lines line, bool *state ,serial_t * serial );
+
+
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * Definition file

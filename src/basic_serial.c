@@ -129,9 +129,9 @@ serial_default_config( serial_config_t * config ){
   }
   config->baudrate = B9600;
   config->dataBits = 8;
-  config->flow = NONE;
+  config->flow = FLOWCONTROL_NONE;
   config->minBytes = 0;
-  config->parity = NONE;
+  config->parity = PARTIY_NONE;
   config->readonly = false;
   config->stopBits = 1;
   config->timeout = 100;
@@ -160,18 +160,18 @@ serial_config_change_parity( const uint8_t parity, struct termios * tty ){
       errno = EINVAL;
       return -1;
       
-    case NONE:
+    case PARTIY_NONE:
       tty->c_cflag &= ~(PARENB);                                                //!< Disable parity (Clear bit)
       tty->c_iflag &= ~(INPCK);                                                 //!< Disable parity checking
       break;
     
-    case ODD:
+    case PARITY_ODD:
       tty->c_cflag |= (PARENB) | (PARODD);                                      //!< Enable parity (Set bit) and Enable odd parity
       tty->c_iflag |= (INPCK);                                                  //!< Enable parity checking
       break;
 
 
-    case EVEN:
+    case PARTIY_EVEN:
       tty->c_cflag |= (PARENB);                                                 //!< Enable parity (Set bit)
       tty->c_cflag &= ~(PARODD);                                                //!< Enable even parity
       tty->c_iflag |= (INPCK);                                                  //!< Enable parity checking
@@ -274,21 +274,21 @@ serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tt
       errno = EINVAL;
       return -1;
 
-    case NONE:
+    case FLOWCONTROL_NONE:
       tty->c_iflag &= ~(IXON | IXOFF | IXANY);
       // tty->c_cflag &= ~(CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
 
-    case HARDWARE:
+    case FLOWCONTROL_HARDWARE:
       tty->c_iflag &= ~(IXON | IXOFF | IXANY);
       // tty->c_cflag |= (CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
     
-    case SOFTWARE:
+    case FLOWCONTROL_SOFTWARE:
       tty->c_iflag |= (IXON | IXOFF | IXANY);
       // tty->c_cflag &= ~(CRTSCTS);
       tty->c_cc[VSTART] = 1;                                                   //!< Enable start character (XON) - enable software flow control

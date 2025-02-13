@@ -77,7 +77,7 @@ typedef struct {
   uint8_t  parity:2;                                                           //!< The detection of error parity, example ODD.
   uint8_t  dataBits:4;                                                         //!< The number of bits per serial word, example 8.
   uint8_t  stopBits:1;                                                         //!< The number of stop bits per serial word, example 1.
-  uint8_t  baudrate;                                                           //!< The baud rate of the communication in bits per second, example 9600.
+  int      baudrate;                                                           //!< The baud rate of the communication in bits per second, example 9600.
   uint16_t timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
   uint16_t minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
 } serial_config_t;

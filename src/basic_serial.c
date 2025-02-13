@@ -53,9 +53,9 @@ serial_open( const char *pathname, const serial_config_t * config, serial_t * se
   }
   
   if( true == config->readonly )
-    serial->pointer.fd = open( serial->pathname, O_RDONLY | O_NOCTTY );
+    serial->pointer.fd = open( pathname, O_RDONLY | O_NOCTTY );
   else 
-    serial->pointer.fd = open( serial->pathname, O_RDWR | O_NOCTTY );
+    serial->pointer.fd = open( pathname, O_RDWR | O_NOCTTY );
 
   if( -1 == serial->pointer.fd ){
     fprintf(stderr, "ERROR:  failed to open %s: %s, at line %d in file %s\n", pathname, strerror(errno), __LINE__, __FILE__);
@@ -276,21 +276,21 @@ serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tt
 
     case FLOWCONTROL_NONE:
       tty->c_iflag &= ~(IXON | IXOFF | IXANY);
-      // tty->c_cflag &= ~(CRTSCTS);
+      tty->c_cflag &= ~(CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
 
     case FLOWCONTROL_HARDWARE:
       tty->c_iflag &= ~(IXON | IXOFF | IXANY);
-      // tty->c_cflag |= (CRTSCTS);
+      tty->c_cflag |= (CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
     
     case FLOWCONTROL_SOFTWARE:
       tty->c_iflag |= (IXON | IXOFF | IXANY);
-      // tty->c_cflag &= ~(CRTSCTS);
+      tty->c_cflag &= ~(CRTSCTS);
       tty->c_cc[VSTART] = 1;                                                   //!< Enable start character (XON) - enable software flow control
       tty->c_cc[VSTOP] = 1;                                                    //!< Enable stop character (XOFF) - enable software flow control
       break;
@@ -809,7 +809,7 @@ serial_set_line_state( enum serial_control_lines line, bool state, serial_t * se
   }
 
   bool currentState;
-  if( -1 != serial_read_line_state( line, &currentState, serial ) ){
+  if( -1 == serial_read_line_state( line, &currentState, serial ) ){
     fprintf(stderr, "ERROR: serial_read_line_state at line %d in file %s\n", __LINE__, __FILE__);
     return -1;
   }
@@ -829,7 +829,7 @@ serial_set_line_state( enum serial_control_lines line, bool state, serial_t * se
       return -1;
     }
 
-    if( -1 != serial_read_line_state( line, &currentState, serial ) ){
+    if( -1 == serial_read_line_state( line, &currentState, serial ) ){
       fprintf(stderr, "ERROR: serial_read_line_state at line %d in file %s\n", __LINE__, __FILE__);
       return -1;
     }

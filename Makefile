@@ -18,6 +18,10 @@ bin/test: test/unit.c $(LIB_A) include/basic_serial.h
 		mkdir -p bin/test
 		$(CC) $(CFLAGS) test/unit.c -o bin/test/unit.out -Lbuild $(LIB_A) $(LDFLAGS)
 
+install:
+		sudo cp include/basic_serial.h /usr/local/include
+		sudo cp build/basic_serial.a /usr/local/lib
+
 clean:
 		rm -rf build bin 
 

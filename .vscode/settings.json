@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "basic_serial.h": "c"
+        "basic_serial.h": "c",
+        "stat.h": "c",
+        "check.h": "c"
     }
 }

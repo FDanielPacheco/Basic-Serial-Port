@@ -577,7 +577,7 @@ serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t
  * 
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 int32_t 
-serial_printf( serial_t * serial, const char * format, ... ){
+serial_write( serial_t * serial, const char * format, ... ){
   if( !serial || !format ) {
     errno = EINVAL;
     fprintf(stderr, "ERROR: serial and/or format are 'NULL' at line %d in file %s\n", __LINE__, __FILE__);

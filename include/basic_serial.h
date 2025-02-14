@@ -114,14 +114,12 @@ int8_t serial_config_change_extra( const uint16_t timeout, const uint16_t min, s
 
 int32_t serial_readLine( char * buf, const int32_t size, const int32_t offset, serial_t * serial );
 int32_t serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t length, serial_t * serial );
-int32_t serial_printf( serial_t * serial, const char * format, ... );
+int32_t serial_write( serial_t * serial, const char * format, ... );
 
 int32_t serial_available( serial_t * serial );
 
 int8_t serial_set_line_state( enum serial_control_lines line, bool state, serial_t * serial );
 int8_t serial_read_line_state( enum serial_control_lines line, bool *state ,serial_t * serial );
-
-
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * Definition file

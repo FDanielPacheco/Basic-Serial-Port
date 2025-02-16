@@ -614,7 +614,7 @@ serial_write( serial_t * serial, const char * format, ... ){
     if( ferror( serial->pointer.fp ) )
       fprintf(stderr, "ERROR: write to serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
     else
-      fprintf(stderr, "WARNING: Wrote less bytes than expected to the serial port at line %d in file %s\n", __LINE__, __FILE__);
+      fprintf(stderr, "WARNING: Wrote less bytes than expected to the serial port [debug:(len)%d,(size)%d] at line %d in file %s\n", len, size, __LINE__, __FILE__);
     
     va_end( args );
     return -1;

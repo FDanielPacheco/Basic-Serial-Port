@@ -1,8 +1,7 @@
-# LibLinux-Serial_C
+# Basic-Serial-Port
 
-LibLinux-Serial_C is a lightweight and portable C library 
-providing a simple API for serial port communication 
-(basic_serial.h) on Linux. 
+Is a lightweight and portable C and C++ library 
+providing a simple API for serial port communication on Linux. 
 
 Designed specifically for robotics and embedded systems, 
 it prioritizes a small footprint and avoids extra dependencies 
@@ -15,8 +14,7 @@ This library is intended for users familiar with their
 hardware configurations, and therefore does not include 
 features such as automatic port discovery or baud rate detection. 
  
-This library is intended for communication with non-canonical 
-devices.
+This library is intended for communication with non-canonical devices.
 
 ---
 
@@ -33,7 +31,7 @@ devices.
 
 ## Features
 
-*   **Portable:**  Written in standard C and designed for Linux systems.
+*   **Portable:**  Written in standard C and C++ and designed for Linux systems.
 *   **No External Dependencies:**  Easy to integrate into embedded systems and projects with minimal overhead.
 *   **Configurable:** Supports setting baud rate, parity, stop bits and flow control.
 *   **Deterministic:** Supports timeouts or minimum number of bytes to block read functions.
@@ -49,7 +47,7 @@ Clone the repository (if not already done):
 ```bash
 $ git clone https://github.com/FDanielPacheco/LibLinux-Serial_C.git
 
-$ cd LibLinux-Serial_C
+$ cd Basic-Serial-Port
 ```
 
 If it's only necessary to install the library jump to section install, otherwise to build the library:

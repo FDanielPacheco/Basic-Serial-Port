@@ -1,29 +1,27 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -g -Iinclude
+CC   = gcc
+CCPP = g++
+
+CFLAGS = -Wall -Wextra -Wpedantic -Wshadow -Wconversion -g -Iinclude
 LDFLAGS = -pthread -lcheck_pic -lrt -lm -lsubunit
 
 LIB_NAME = basic_serial
-LIB_A = build/$(LIB_NAME).a
+LIB_A = build/c/$(LIB_NAME).a
 
-build: src/*.c include/basic_serial.h
-		mkdir -p build
-		$(CC) $(CFLAGS) -c src/*.c -o build/*.o
-		ar rcs $(LIB_A) build/*.o
+build/c: src/c/basic_serial.c include/basic_serial.h
+		mkdir -p build/c/
+		$(CC) $(CFLAGS) -c src/c/basic_serial.c -o build/c/basic_serial.o
+		ar rcs $(LIB_A) build/c/basic_serial.o
 
-bin/example/1: example/1.c $(LIB_A) include/basic_serial.h
-		mkdir -p bin/example
-		$(CC) $(CFLAGS) example/1.c -o bin/example/1.out -Lbuild $(LIB_A) $(LDFLAGS)
-
-bin/test: test/unit.c $(LIB_A) include/basic_serial.h
-		mkdir -p bin/test
-		$(CC) $(CFLAGS) test/unit.c -o bin/test/unit.out -Lbuild $(LIB_A) $(LDFLAGS)
+build/c/example: build/c example/usage_c_api.c include/basic_serial.h
+		mkdir -p build/c/example/
+		$(CC) $(CFLAGS) example/usage_c_api.c -o build/c/example/usage_c_api.out -Lbuild $(LIB_A) $(LDFLAGS)
 
 install: clean build
 		sudo cp include/basic_serial.h /usr/local/include
 		sudo cp build/basic_serial.a /usr/local/lib/libbasic_serial.a
 
 clean:
-		rm -rf build bin 
+		rm -rf build 
 
 .PHONY: all clean  
-all: $(LIB_A) build/example/1
+all: clean build/c build/c/example

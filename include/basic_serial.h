@@ -80,12 +80,12 @@ enum serial_control_lines{
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 
 typedef struct {
-  bool     readonly:1;                                                         //!< If the file pointer will be given in read only mode, example NO = r+.
+  bool     readonly;                                                           //!< If the file pointer will be given in read only mode, example NO = r+.
   uint8_t  flow:2;                                                             //!< The hardware flow control, example HARDWARE.
   uint8_t  parity:2;                                                           //!< The detection of error parity, example ODD.
   uint8_t  dataBits:4;                                                         //!< The number of bits per serial word, example 8.
   uint8_t  stopBits:1;                                                         //!< The number of stop bits per serial word, example 1.
-  int      baudrate;                                                           //!< The baud rate of the communication in bits per second, example 9600.
+  int      baudrate;                                                           //!< The baud rate of the communication in bits per second, example B9600.
   uint16_t timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
   uint16_t minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
 } serial_config_t;
@@ -128,7 +128,6 @@ int32_t serial_available( serial_t * serial );
 
 int8_t serial_set_line_state( enum serial_control_lines line, bool state, serial_t * serial );
 int8_t serial_read_line_state( enum serial_control_lines line, bool *state ,serial_t * serial );
-
 
 /***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
  * External C++ extern macro

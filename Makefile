@@ -16,9 +16,9 @@ build/c/example: build/c example/usage_c_api.c include/basic_serial.h
 		mkdir -p build/c/example/
 		$(CC) $(CFLAGS) example/usage_c_api.c -o build/c/example/usage_c_api.out -Lbuild $(LIB_A) $(LDFLAGS)
 
-install: clean build
+install/c: clean build/c
 		sudo cp include/basic_serial.h /usr/local/include
-		sudo cp build/basic_serial.a /usr/local/lib/libbasic_serial.a
+		sudo cp build/c/basic_serial.a /usr/local/lib/libbasic_serial.a
 
 clean:
 		rm -rf build 

@@ -161,20 +161,20 @@ serial_config_change_parity( const uint8_t parity, struct termios * tty ){
       return -1;
       
     case PARTIY_NONE:
-      tty->c_cflag &= ~(PARENB);                                                //!< Disable parity (Clear bit)
-      tty->c_iflag &= ~(INPCK);                                                 //!< Disable parity checking
+      tty->c_cflag &= (tcflag_t) ~(PARENB);                                    //!< Disable parity (Clear bit)
+      tty->c_iflag &= (tcflag_t) ~(INPCK);                                     //!< Disable parity checking
       break;
     
     case PARITY_ODD:
-      tty->c_cflag |= (PARENB) | (PARODD);                                      //!< Enable parity (Set bit) and Enable odd parity
-      tty->c_iflag |= (INPCK);                                                  //!< Enable parity checking
+      tty->c_cflag |= (tcflag_t) (PARENB) | (PARODD);                          //!< Enable parity (Set bit) and Enable odd parity
+      tty->c_iflag |= (tcflag_t) (INPCK);                                      //!< Enable parity checking
       break;
 
 
     case PARTIY_EVEN:
-      tty->c_cflag |= (PARENB);                                                 //!< Enable parity (Set bit)
-      tty->c_cflag &= ~(PARODD);                                                //!< Enable even parity
-      tty->c_iflag |= (INPCK);                                                  //!< Enable parity checking
+      tty->c_cflag |= (tcflag_t) (PARENB);                                     //!< Enable parity (Set bit)
+      tty->c_cflag &= (tcflag_t) ~(PARODD);                                    //!< Enable even parity
+      tty->c_iflag |= (tcflag_t) (INPCK);                                      //!< Enable parity checking
       break;
   }
   return 0;
@@ -202,11 +202,11 @@ serial_config_change_stopbits( const uint8_t stopBits, struct termios * tty ){
       return -1;
 
     case 1:
-      tty->c_cflag &= ~(CSTOPB);                                               //!< Set 1 stop bit 
+      tty->c_cflag &= (tcflag_t) ~(CSTOPB);                                    //!< Set 1 stop bit 
       break;
 
     case 2:      
-      tty->c_cflag |= (CSTOPB);                                                //!< Set 2 stop bits
+      tty->c_cflag |= (tcflag_t) (CSTOPB);                                     //!< Set 2 stop bits
       break;
   }
   return 0;
@@ -228,26 +228,26 @@ serial_config_change_databits( const uint8_t dataBits, struct termios * tty ){
     return -1;
   }
 
-  tty->c_cflag &= ~CSIZE;                                                      //!< Clear all the size bits, then use one of the statements below
+  tty->c_cflag &= (tcflag_t) ~CSIZE;                                          //!< Clear all the size bits, then use one of the statements below
   switch( dataBits ){
     default:
       errno = EINVAL;
       return -1;
 
     case 5:
-      tty->c_cflag |= CS5;                                                     //!< 5 bits per byte
+      tty->c_cflag |= (tcflag_t) CS5;                                         //!< 5 bits per byte
       break;
     
     case 6:
-      tty->c_cflag |= CS6;                                                     //!< 6 bits per byte
+      tty->c_cflag |= (tcflag_t) CS6;                                        //!< 6 bits per byte
       break;
     
     case 7:
-      tty->c_cflag |= CS7;                                                     //!< 7 bits per byte
+      tty->c_cflag |= (tcflag_t) CS7;                                        //!< 7 bits per byte
       break;
     
     case 8:
-      tty->c_cflag |= CS8;                                                     //!< 8 bits per byte
+      tty->c_cflag |= (tcflag_t) CS8;                                        //!< 8 bits per byte
       break;
   }
   return 0;
@@ -275,22 +275,22 @@ serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tt
       return -1;
 
     case FLOWCONTROL_NONE:
-      tty->c_iflag &= ~(IXON | IXOFF | IXANY);
-      tty->c_cflag &= ~(CRTSCTS);
+      tty->c_iflag &= (tcflag_t) ~(IXON | IXOFF | IXANY);
+      tty->c_cflag &= (tcflag_t) ~(CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
 
     case FLOWCONTROL_HARDWARE:
-      tty->c_iflag &= ~(IXON | IXOFF | IXANY);
-      tty->c_cflag |= (CRTSCTS);
+      tty->c_iflag &= (tcflag_t) ~(IXON | IXOFF | IXANY);
+      tty->c_cflag |= (tcflag_t) (CRTSCTS);
       tty->c_cc[VSTART] = 0;                                                   //!< Disable start character (XON) - disable software flow control
       tty->c_cc[VSTOP] = 0;                                                    //!< Disable stop character (XOFF) - disable software flow control
       break;
     
     case FLOWCONTROL_SOFTWARE:
-      tty->c_iflag |= (IXON | IXOFF | IXANY);
-      tty->c_cflag &= ~(CRTSCTS);
+      tty->c_iflag |= (tcflag_t) (IXON | IXOFF | IXANY);
+      tty->c_cflag &= (tcflag_t) ~(CRTSCTS);
       tty->c_cc[VSTART] = 1;                                                   //!< Enable start character (XON) - enable software flow control
       tty->c_cc[VSTOP] = 1;                                                    //!< Enable stop character (XOFF) - enable software flow control
       break;
@@ -309,24 +309,24 @@ serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tt
  * 
  **************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 int8_t
-serial_config_change_extra( const uint16_t timeout, const uint16_t min, struct termios * tty ){
+serial_config_change_extra( const uint8_t timeout, const uint8_t min, struct termios * tty ){
   if( !tty ){
     errno = EINVAL;
     return -1;
   }
 
-  tty->c_lflag &= ~(ICANON);                                                   //!< Disable canonical mode
-  tty->c_lflag &= ~(ECHO);                                                     //!< Disable echo
-  tty->c_lflag &= ~(ECHOE);                                                    //!< Disable erasure
-  tty->c_lflag &= ~(ECHONL);                                                   //!< Disable new-line echo
-  tty->c_lflag &= ~(ISIG);                                                     //!< Disable interpretation of INTR, QUIT and SUSP
-  tty->c_oflag &= ~(OPOST);                                                    //!< Set to raw output
-  tty->c_oflag &= ~(ONLCR);                                                    //!< Disable the conversion of new line to CR/LF
-  tty->c_iflag &= ~(IGNBRK);                                                   //!< Disable ignore break condition
-  tty->c_iflag &= ~(BRKINT);                                                   //!< Disable send a SIGINT when a break condition is detected
-  tty->c_iflag &= ~(INLCR);                                                    //!< Disable map NL to CR
-  tty->c_iflag &= ~(IGNCR);                                                    //!< Disable ignore CR
-  tty->c_iflag &= ~(ICRNL);                                                    //!< Disable map CR to NL
+  tty->c_lflag &= (tcflag_t) ~(ICANON);                                        //!< Disable canonical mode
+  tty->c_lflag &= (tcflag_t) ~(ECHO);                                          //!< Disable echo
+  tty->c_lflag &= (tcflag_t) ~(ECHOE);                                         //!< Disable erasure
+  tty->c_lflag &= (tcflag_t) ~(ECHONL);                                        //!< Disable new-line echo
+  tty->c_lflag &= (tcflag_t) ~(ISIG);                                          //!< Disable interpretation of INTR, QUIT and SUSP
+  tty->c_oflag &= (tcflag_t) ~(OPOST);                                         //!< Set to raw output
+  tty->c_oflag &= (tcflag_t) ~(ONLCR);                                         //!< Disable the conversion of new line to CR/LF
+  tty->c_iflag &= (tcflag_t) ~(IGNBRK);                                        //!< Disable ignore break condition
+  tty->c_iflag &= (tcflag_t) ~(BRKINT);                                        //!< Disable send a SIGINT when a break condition is detected
+  tty->c_iflag &= (tcflag_t) ~(INLCR);                                         //!< Disable map NL to CR
+  tty->c_iflag &= (tcflag_t) ~(IGNCR);                                         //!< Disable ignore CR
+  tty->c_iflag &= (tcflag_t) ~(ICRNL);                                         //!< Disable map CR to NL
   tty->c_cc[VEOF]     = 4;                                                     //!< Set EOF character to EOT (Ctrl+D, ASCII 4) - or 0 if not used
   tty->c_cc[VTIME]    = timeout;                                               //!< Set timeout for read() in tenths of a second
   tty->c_cc[VMIN]     = min;                                                   //!< Set minimum number of bytes for read() to return
@@ -488,7 +488,7 @@ serial_readLine( char * buf, const int32_t size, const int32_t offset, serial_t 
     return -1;
   }
 
-  return strlen( buf + offset );  
+  return (int32_t) strlen( buf + offset );  
 }
 
 /**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************//**
@@ -536,7 +536,7 @@ serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t
 
   clearerr( serial->pointer.fp );
 
-  int32_t len = fread( buf + offset, 1, length, serial->pointer.fp );
+  int32_t len = (int32_t) fread( buf + offset, 1, (size_t) length, serial->pointer.fp );
 
   if( length > len ){
     if( feof( serial->pointer.fp ) ){
@@ -608,7 +608,7 @@ serial_write( serial_t * serial, const char * format, ... ){
     return -1;
   }
 
-  int32_t size = fwrite( buf, 1, len, serial->pointer.fp );
+  int32_t size = (int32_t) fwrite( buf, 1, (size_t) len, serial->pointer.fp );
 
   if( size < len ){
     if( ferror( serial->pointer.fp ) )
@@ -821,8 +821,8 @@ serial_set_line_state( enum serial_control_lines line, bool state, serial_t * se
       return -1;
     }
     
-    if( state ) status |= line;
-    else        status &= ~line;
+    if( state ) status |= (int) line;
+    else        status &= (int) ~line;
 
     if( -1 == ioctl( serial->pointer.fd, TIOCMSET, &status ) ){
       fprintf(stderr, "ERROR: ioctl(TIOCMSET) the serial port failed: %s at line %d in file %s\n", strerror(errno), __LINE__, __FILE__);
@@ -876,6 +876,6 @@ serial_read_line_state( enum serial_control_lines line, bool *state ,serial_t * 
     return -1;
   }
   
-  *state = (status & line) != 0;
+  *state = ( (uint8_t) status & line) != 0;
   return 0;
 }

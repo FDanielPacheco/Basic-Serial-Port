@@ -85,9 +85,9 @@ typedef struct {
   uint8_t  parity:2;                                                           //!< The detection of error parity, example ODD.
   uint8_t  dataBits:4;                                                         //!< The number of bits per serial word, example 8.
   uint8_t  stopBits:1;                                                         //!< The number of stop bits per serial word, example 1.
-  int      baudrate;                                                           //!< The baud rate of the communication in bits per second, example B9600.
-  uint16_t timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
-  uint16_t minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
+  speed_t  baudrate;                                                           //!< The baud rate of the communication in bits per second, example B9600.
+  uint8_t  timeout;                                                            //!< The time any read function will wait in deciseconds for the information to arrive, example 200.
+  uint8_t  minBytes;                                                           //!< The minimum number of bytes to necessary receive before returning the read function.
 } serial_config_t;
 
 typedef struct{
@@ -118,7 +118,7 @@ int8_t serial_config_change_parity( const uint8_t parity, struct termios * tty )
 int8_t serial_config_change_stopbits( const uint8_t stopBits, struct termios * tty );
 int8_t serial_config_change_databits( const uint8_t dataBits, struct termios * tty );
 int8_t serial_config_change_flowcontrol( const uint8_t flowControl, struct termios * tty );
-int8_t serial_config_change_extra( const uint16_t timeout, const uint16_t min, struct termios * tty );
+int8_t serial_config_change_extra( const uint8_t timeout, const uint8_t min, struct termios * tty );
 
 int32_t serial_readLine( char * buf, const int32_t size, const int32_t offset, serial_t * serial );
 int32_t serial_read( char * buf, const int32_t size, const int32_t offset, const int32_t length, serial_t * serial );
